@@ -24,14 +24,16 @@ const prepareInput = () => {
   input.focus();
 }
 
+const onValidSubmit = () => {
+  addFeed();
+  prepareInput();
+}
+
 const validate = (fields) => {
   schema.isValid(fields)
     .then((valid) => {
         watchedState.state = valid ? 'valid' : 'invalid';
-        if (valid) {
-          addFeed();
-          prepareInput();
-        }
+        if (valid) onValidSubmit();
       });
 };
 

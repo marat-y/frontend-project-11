@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import * as yup from 'yup';
 // import keyBy from 'lodash/keyBy.js';
 import { input, watchedState } from './view';
+import i18n from 'i18next';
 
 const form = document.querySelector('form');
 const formData = () => Object.fromEntries(new FormData(form).entries());
@@ -40,3 +41,14 @@ const onFormSubmit = (e) => {
 }
 
 form.addEventListener('submit', onFormSubmit);
+
+i18n.init({
+  lng: 'ru',
+  debug: true,
+  resources: {
+    ru: {
+      translation: {
+      }
+    }
+  }
+});

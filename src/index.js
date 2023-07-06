@@ -35,7 +35,6 @@ const watchedState = onChange(state, () => {
   }
 });
 
-
 yup.setLocale({
   string: {
     url: 'invalid_url'

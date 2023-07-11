@@ -28,7 +28,8 @@ i18n.init({
         view: 'Просмотр',
         success: 'RSS успешно загружен',
         errors: {
-          invalid_url: 'Ссылка должна быть валидным URL'
+          invalid_url: 'Ссылка должна быть валидным URL',
+          parsing_error: 'Проблемы с парсингом фида'
         }
       }
     }
@@ -65,7 +66,7 @@ const downloadFeed = (url) => {
     })
 };
 
-const addFeed = () => {
+const handleSubmission = () => {
   const newFeed = { id: _.uniqueId(), url: formData().url }
   downloadFeed(newFeed.url)
     .then((rawFeed) => {
@@ -83,6 +84,12 @@ const addFeed = () => {
         watchedState.posts.push(post);
       })
       watchedState.feedback = i18n.t('success');
+      prepareInput();
+    })
+    .catch((error) => {
+      console.log(error);
+      watchedState.state = 'invalid';
+      watchedState.feedback = i18n.t('errors.parsing_error')
     })
 }
 
@@ -91,17 +98,12 @@ const prepareInput = () => {
   input.focus();
 }
 
-const onValidSubmit = () => {
-  addFeed();
-  prepareInput();
-}
-
 const validate = (fields) => {
   watchedState.feedback = '';
   schema.validate(fields, { abortEarly: false })
     .then(() => {
       watchedState.state = 'valid';
-      onValidSubmit();
+      handleSubmission();
     })
     .catch((e) => {
       watchedState.state = 'invalid';

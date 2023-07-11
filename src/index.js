@@ -57,7 +57,7 @@ const schema = yup.object({
   url: yup.string()
     .url()
     .required()
-    .notOneOf(state.feeds),
+    .notOneOf(state.feeds.map((feed) => feed.url)),
 });
 
 const downloadFeed = (url) => {

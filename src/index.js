@@ -29,7 +29,7 @@ i18n.init({
         success: 'RSS успешно загружен',
         errors: {
           invalid_url: 'Ссылка должна быть валидным URL',
-          parsing_error: 'Проблемы с парсингом фида'
+          parsing_error: 'Проблемы с парсингом фида, это точно RSS?'
         }
       }
     }

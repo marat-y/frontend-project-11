@@ -1,7 +1,7 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import * as yup from 'yup';
-import i18n from 'i18next';
+import i18next from 'i18next';
 import _ from 'lodash';
 import axios from 'axios';
 import watchedState from './view';
@@ -23,6 +23,8 @@ const initialState = { state: 'valid',
                 posts: [],
                 feedback: ''
               };
+
+const i18n = i18next.createInstance();
 
 i18n.init({
   lng: 'ru',
@@ -90,8 +92,10 @@ const handleSubmission = () => {
         post.link = rawPost.querySelector('link').textContent;
         state.posts.push(post);
       })
+
       state.state = 'valid';
       state.feedback = i18n.t('success');
+      
       prepareInput();
     })
     .catch((error) => {

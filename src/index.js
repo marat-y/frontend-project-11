@@ -166,8 +166,6 @@ const downloadFeed = (url) => {
   const proxifiedUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodedUrl}`
   return axios.get(proxifiedUrl)
     .then((response) => {
-      console.log('axios response:');
-      console.log(response);
       const domParser = new DOMParser;
       const parsedResponse = domParser.parseFromString(response.data.contents, 'text/xml');
       return parsedResponse;

@@ -11,7 +11,8 @@ const elements = {
   input: document.querySelector('#url-input'),
   feedbackContainer: document.querySelector('.feedback'),
   feedsContainer: document.querySelector('.feeds'),
-  postsContainer: document.querySelector('.posts')
+  postsContainer: document.querySelector('.posts'),
+  submitButton: document.querySelector('[type="submit"]')
 };
 
 const formData = () => Object.fromEntries(new FormData(elements.form).entries());
@@ -89,6 +90,7 @@ const handleSubmission = () => {
         post.link = rawPost.querySelector('link').textContent;
         state.posts.push(post);
       })
+      state.state = 'valid';
       state.feedback = i18n.t('success');
       prepareInput();
     })
@@ -108,7 +110,6 @@ const validate = (fields) => {
   state.feedback = '';
   schema.validate(fields, { abortEarly: false })
     .then(() => {
-      state.state = 'valid';
       handleSubmission();
     })
     .catch((e) => {

@@ -1,16 +1,18 @@
 import onChange from 'on-change';
 
 const styleForm = (state, elements) => {
-  elements.input.classList.toggle('is-invalid', state.state != 'valid');
+  elements.input.classList.toggle('is-invalid', state.state === 'invalid');
+  elements.input.disabled = state.state === 'in_progress';
+  elements.submitButton.disabled = state.state === 'in_progress';
 }
 
-const renderFeedback = (state, elements) => {
-  elements.feedbackContainer.classList.toggle('text-success', state.state === 'valid');
-  elements.feedbackContainer.classList.toggle('text-danger', state.state != 'valid');
-  elements.feedbackContainer.textContent = state.feedback;
+const renderFeedback = (state, feedbackContainer) => {
+  feedbackContainer.classList.toggle('text-success', state.state === 'valid');
+  feedbackContainer.classList.toggle('text-danger', state.state != 'valid');
+  feedbackContainer.textContent = state.feedback;
 }
 
-const renderFeeds = (state, i18n, elements) => {
+const renderFeeds = (state, i18n, feedsContainer) => {
   if (state.feeds.length > 0) {
     const feedsCard = document.createElement('div');
     feedsCard.classList.add('card', 'border-0');
@@ -47,12 +49,12 @@ const renderFeeds = (state, i18n, elements) => {
     
     feedsCard.append(feedsList);
     
-    elements.feedsContainer.innerHTML = '';
-    elements.feedsContainer.append(feedsCard);
+    feedsContainer.innerHTML = '';
+    feedsContainer.append(feedsCard);
   }
 }
 
-const renderPosts = (state, i18n, elements) => {
+const renderPosts = (state, i18n, postsContainer) => {
   if (state.posts.length > 0) {
     const postsCard = document.createElement('div');
     postsCard.classList.add('card', 'border-0');
@@ -97,16 +99,16 @@ const renderPosts = (state, i18n, elements) => {
     
     postsCard.append(postsList);
     
-    elements.postsContainer.innerHTML = '';
-    elements.postsContainer.append(postsCard);
+    postsContainer.innerHTML = '';
+    postsContainer.append(postsCard);
   }
 }
 
 export default (state, i18n, elements) => {
   return onChange(state, () => {
     styleForm(state, elements);
-    renderFeedback(state, elements);
-    renderFeeds(state, i18n, elements);
-    renderPosts(state, i18n,elements);
+    renderFeedback(state, elements.feedbackContainer);
+    renderFeeds(state, i18n, elements.feedsContainer);
+    renderPosts(state, i18n,elements.postsContainer);
   });
 };

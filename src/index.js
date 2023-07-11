@@ -4,13 +4,19 @@ import * as yup from 'yup';
 import i18n from 'i18next';
 import _ from 'lodash';
 import axios from 'axios';
-import watchState from './view';
+import watchedState from './view';
 
-const form = document.querySelector('form');
-const formData = () => Object.fromEntries(new FormData(form).entries());
-const input = document.querySelector('#url-input');
+const elements = {
+  form: document.querySelector('form'),
+  input: document.querySelector('#url-input'),
+  feedbackContainer: document.querySelector('.feedback'),
+  feedsContainer: document.querySelector('.feeds'),
+  postsContainer: document.querySelector('.posts')
+};
 
-const state = { state: 'valid', 
+const formData = () => Object.fromEntries(new FormData(elements.form).entries());
+
+const initialState = { state: 'valid', 
                 errors: [],
                 feeds: [],
                 posts: [],
@@ -36,7 +42,7 @@ i18n.init({
   }
 });
 
-const watchedState = watchState(state, i18n, input);
+const state = watchedState(initialState, i18n, elements);
 
 yup.setLocale({
   string: {
@@ -48,7 +54,7 @@ const schema = yup.object({
   url: yup.string()
     .url()
     .required()
-    .notOneOf(watchedState.feeds),
+    .notOneOf(state.feeds),
 });
 
 const downloadFeed = (url) => {
@@ -73,7 +79,7 @@ const handleSubmission = () => {
       const channel = rawFeed.querySelector('channel');
       newFeed.title = channel.querySelector('title').textContent;
       newFeed.description = channel.querySelector('description')?.textContent;
-      watchedState.feeds.push(newFeed);
+      state.feeds.push(newFeed);
 
       const rawPosts = channel.querySelectorAll('item');
       rawPosts.forEach((rawPost) => {
@@ -81,39 +87,40 @@ const handleSubmission = () => {
         post.title = rawPost.querySelector('title').textContent;
         post.description = rawPost.querySelector('description').textContent;
         post.link = rawPost.querySelector('link').textContent;
-        watchedState.posts.push(post);
+        state.posts.push(post);
       })
-      watchedState.feedback = i18n.t('success');
+      state.feedback = i18n.t('success');
       prepareInput();
     })
     .catch((error) => {
       console.log(error);
-      watchedState.state = 'invalid';
-      watchedState.feedback = i18n.t('errors.parsing_error')
+      state.state = 'invalid';
+      state.feedback = i18n.t('errors.parsing_error')
     })
 }
 
 const prepareInput = () => {
-  input.value = '';
-  input.focus();
+  elements.input.value = '';
+  elements.input.focus();
 }
 
 const validate = (fields) => {
-  watchedState.feedback = '';
+  state.feedback = '';
   schema.validate(fields, { abortEarly: false })
     .then(() => {
-      watchedState.state = 'valid';
+      state.state = 'valid';
       handleSubmission();
     })
     .catch((e) => {
-      watchedState.state = 'invalid';
-      watchedState.feedback = i18n.t(`errors.${e.errors[0]}`)
+      state.state = 'invalid';
+      state.feedback = i18n.t(`errors.${e.errors[0]}`)
     });
 };
 
 const onFormSubmit = (e) => {
   e.preventDefault();
+  state.state = 'in_progress';
   validate(formData());
 }
 
-form.addEventListener('submit', onFormSubmit);
+elements.form.addEventListener('submit', onFormSubmit);

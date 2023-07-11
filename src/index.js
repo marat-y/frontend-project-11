@@ -70,7 +70,6 @@ const downloadFeed = (url) => {
       return parsedResponse;
     })
     .catch((error) => {
-      // handle error
       console.log(error);
     })
 };

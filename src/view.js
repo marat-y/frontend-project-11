@@ -2,7 +2,7 @@ import onChange from 'on-change';
 
 const styleForm = (state, elements) => {
   elements.input.classList.toggle('is-invalid', state.state === 'invalid');
-  elements.input.disabled = state.state === 'in_progress';
+  elements.input.readonly = state.state === 'in_progress';
   elements.submitButton.disabled = state.state === 'in_progress';
 }
 

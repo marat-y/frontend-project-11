@@ -54,7 +54,8 @@ const renderFeeds = (state, i18n, feedsContainer) => {
   }
 }
 
-const renderPosts = (state, i18n, postsContainer) => {
+const renderPosts = (state, i18n, elements) => {
+
   if (state.posts.length > 0) {
     const postsCard = document.createElement('div');
     postsCard.classList.add('card', 'border-0');
@@ -77,7 +78,8 @@ const renderPosts = (state, i18n, postsContainer) => {
       postLi.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
       
       const postLink = document.createElement('a');
-      postLink.classList.add('fw-bold');
+      postLink.classList.toggle('fw-bold', !post.viewed);
+      postLink.classList.toggle('fw-normal', post.viewed);
       postLink.textContent = post.title;
       postLink.href = post.link;
       postLink.dataset.id = post.id;
@@ -85,13 +87,20 @@ const renderPosts = (state, i18n, postsContainer) => {
       postLink.rel = 'noopener noreferrer';
       postLi.append(postLink);
 
+      const modal = elements.modal;
       const postPreview = document.createElement('button');
       postPreview.type = 'button';
       postPreview.classList.add('btn', 'btn-outline-primary', 'btn-sm');
       postPreview.dataset.id = post.id;
       postPreview.dataset.bsToggle = 'modal';
-      postPreview.dataset.bsTarget = '#modal';
+      postPreview.dataset.bsTarget = `#${modal.id}`;
       postPreview.textContent = i18n.t('view');
+      postPreview.addEventListener('click', (e) => {
+        const post = state.posts.find((post) => post.id === e.target.dataset.id);
+        modal.querySelector('.modal-title').textContent = post.title;
+        modal.querySelector('.modal-body').textContent = post.description;
+        modal.querySelector('a.read').href = post.link;
+      })
       postLi.append(postPreview);
 
       postsList.prepend(postLi);
@@ -99,8 +108,8 @@ const renderPosts = (state, i18n, postsContainer) => {
     
     postsCard.append(postsList);
     
-    postsContainer.innerHTML = '';
-    postsContainer.append(postsCard);
+    elements.postsContainer.innerHTML = '';
+    elements.postsContainer.append(postsCard);
   }
 }
 
@@ -109,6 +118,6 @@ export default (state, i18n, elements) => {
     styleForm(state, elements);
     renderFeedback(state, elements.feedbackContainer);
     renderFeeds(state, i18n, elements.feedsContainer);
-    renderPosts(state, i18n,elements.postsContainer);
+    renderPosts(state, i18n, elements);
   });
 };

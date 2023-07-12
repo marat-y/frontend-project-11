@@ -12,7 +12,8 @@ const elements = {
   feedbackContainer: document.querySelector('.feedback'),
   feedsContainer: document.querySelector('.feeds'),
   postsContainer: document.querySelector('.posts'),
-  submitButton: document.querySelector('[type="submit"]')
+  submitButton: document.querySelector('[type="submit"]'),
+  modal: document.querySelector('#modal'),
 };
 
 const formData = () => Object.fromEntries(new FormData(elements.form).entries());
@@ -85,7 +86,7 @@ const parsePosts = (feed) => {
         if(state.posts.filter((post) => post.feed_id === feed.id 
                                         && post.guid === guid ).length > 0) return;
 
-        const post = { id: _.uniqueId, feed_id: feed.id, guid: guid }
+        const post = { id: _.uniqueId(), feed_id: feed.id, guid: guid, viewed: false }
         post.title = rawPost.querySelector('title').textContent;
         post.description = rawPost.querySelector('description').textContent;
         post.link = rawPost.querySelector('link').textContent;

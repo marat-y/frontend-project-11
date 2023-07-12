@@ -74,6 +74,32 @@ const downloadFeed = (url) => {
     })
 };
 
+const parsingPeriod = 5000;
+
+const parsePosts = (feed) => {
+  downloadFeed(feed.url)
+    .then((rawFeed) => {
+      const rawPosts = rawFeed.querySelector('channel').querySelectorAll('item');
+      rawPosts.forEach((rawPost) => {
+        const guid = rawPost.querySelector('guid').textContent;
+        if(state.posts.filter((post) => post.feed_id === feed.id 
+                                        && post.guid === guid ).length > 0) return;
+
+        const post = { id: _.uniqueId, feed_id: feed.id, guid: guid }
+        post.title = rawPost.querySelector('title').textContent;
+        post.description = rawPost.querySelector('description').textContent;
+        post.link = rawPost.querySelector('link').textContent;
+        state.posts.push(post);
+      })
+    })
+    .then(() => {
+      setTimeout(parsePosts(feed), parsingPeriod);
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+};
+
 const handleSubmission = () => {
   const newFeed = { id: _.uniqueId(), url: formData().url }
   downloadFeed(newFeed.url)
@@ -83,14 +109,7 @@ const handleSubmission = () => {
       newFeed.description = channel.querySelector('description')?.textContent;
       state.feeds.push(newFeed);
 
-      const rawPosts = channel.querySelectorAll('item');
-      rawPosts.forEach((rawPost) => {
-        const post = { id: _.uniqueId, feed_id: newFeed.id }
-        post.title = rawPost.querySelector('title').textContent;
-        post.description = rawPost.querySelector('description').textContent;
-        post.link = rawPost.querySelector('link').textContent;
-        state.posts.push(post);
-      })
+      parsePosts(newFeed);
 
       state.state = 'valid';
       state.feedback = i18n.t('success');

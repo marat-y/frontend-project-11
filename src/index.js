@@ -38,8 +38,11 @@ i18n.init({
         view: 'Просмотр',
         success: 'RSS успешно загружен',
         errors: {
+          already_exists: 'RSS уже существует',
+          is_blank: 'Не должно быть пустым',
           invalid_url: 'Ссылка должна быть валидным URL',
-          parsing_error: 'Проблемы с парсингом фида, это точно RSS?'
+          network_error: 'Ошибка сети',
+          parsing_error: 'Ресурс не содержит валидный RSS'
         }
       }
     }
@@ -49,16 +52,13 @@ i18n.init({
 const state = watchedState(initialState, i18n, elements);
 
 yup.setLocale({
-  string: {
-    url: 'invalid_url'
+  mixed: {
+    notOneOf: 'already_exists',
+    required: 'is_blank',
   },
-});
-
-const schema = yup.object({
-  url: yup.string()
-    .url()
-    .required()
-    .notOneOf(state.feeds.map((feed) => feed.url)),
+  string: {
+    url: 'invalid_url',
+  },
 });
 
 const downloadFeed = (url) => {
@@ -72,6 +72,8 @@ const downloadFeed = (url) => {
     })
     .catch((error) => {
       console.log(error);
+      state.state = 'invalid';
+      state.feedback = i18n.t('errors.network_error');
     })
 };
 
@@ -130,6 +132,13 @@ const prepareInput = () => {
 }
 
 const validate = (fields) => {
+  const schema = yup.object({
+    url: yup.string()
+      .url()
+      .required()
+      .notOneOf(state.feeds.map((feed) => feed.url)),
+  });
+
   state.feedback = '';
   schema.validate(fields, { abortEarly: false })
     .then(() => {

@@ -4,13 +4,13 @@ const styleForm = (state, elements) => {
   elements.input.classList.toggle('is-invalid', state.state === 'invalid');
   elements.input.readonly = state.state === 'in_progress';
   elements.submitButton.disabled = state.state === 'in_progress';
-}
+};
 
 const renderFeedback = (state, feedbackContainer) => {
   feedbackContainer.classList.toggle('text-success', state.state === 'valid');
-  feedbackContainer.classList.toggle('text-danger', state.state != 'valid');
+  feedbackContainer.classList.toggle('text-danger', state.state !== 'valid');
   feedbackContainer.textContent = state.feedback;
-}
+};
 
 const renderFeeds = (state, i18n, feedsContainer) => {
   if (state.feeds.length > 0) {
@@ -19,7 +19,7 @@ const renderFeeds = (state, i18n, feedsContainer) => {
 
     const feedsTitleContainer = document.createElement('div');
     feedsTitleContainer.classList.add('card-body');
-    
+
     const feedsTitle = document.createElement('h2');
     feedsTitle.classList.add('card-title', 'h4');
     feedsTitle.textContent = i18n.t('feeds');
@@ -29,11 +29,11 @@ const renderFeeds = (state, i18n, feedsContainer) => {
 
     const feedsList = document.createElement('ul');
     feedsList.classList.add('list-group', 'border-0', 'rounded-0');
-    
+
     state.feeds.forEach((feed) => {
       const feedLi = document.createElement('li');
       feedLi.classList.add('list-group-item', 'border-0', 'border-end-0');
-      
+
       const feedTitle = document.createElement('h3');
       feedTitle.classList.add('h6', 'm-0');
       feedTitle.textContent = feed.title;
@@ -45,17 +45,16 @@ const renderFeeds = (state, i18n, feedsContainer) => {
       feedLi.append(feedDescription);
 
       feedsList.append(feedLi);
-    })
-    
+    });
+
     feedsCard.append(feedsList);
-    
+
     feedsContainer.innerHTML = '';
     feedsContainer.append(feedsCard);
   }
-}
+};
 
 const renderPosts = (state, i18n, elements) => {
-
   if (state.posts.length > 0) {
     const postsCard = document.createElement('div');
     postsCard.classList.add('card', 'border-0');
@@ -76,7 +75,7 @@ const renderPosts = (state, i18n, elements) => {
     state.posts.forEach((post) => {
       const postLi = document.createElement('li');
       postLi.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-      
+
       const postLink = document.createElement('a');
       const isViewed = state.viewedPosts.includes(post.id);
       postLink.classList.toggle('fw-bold', !isViewed);
@@ -88,7 +87,7 @@ const renderPosts = (state, i18n, elements) => {
       postLink.rel = 'noopener noreferrer';
       postLi.append(postLink);
 
-      const modal = elements.modal;
+      const { modal } = elements;
       const postPreview = document.createElement('button');
       postPreview.type = 'button';
       postPreview.classList.add('btn', 'btn-outline-primary', 'btn-sm');
@@ -99,30 +98,28 @@ const renderPosts = (state, i18n, elements) => {
       postLi.append(postPreview);
 
       postsList.prepend(postLi);
-    })
-    
+    });
+
     postsCard.append(postsList);
-    
+
     elements.postsContainer.innerHTML = '';
     elements.postsContainer.append(postsCard);
   }
-}
+};
 
 const renderModal = (state, modal) => {
   if (!state.modalPostId) return;
 
-  const post = state.posts.find((post) => post.id === state.modalPostId );
+  const post = state.posts.find((el) => el.id === state.modalPostId);
   modal.querySelector('.modal-title').textContent = post.title;
   modal.querySelector('.modal-body').textContent = post.description;
   modal.querySelector('a.read').href = post.link;
-}
-
-export default (state, i18n, elements) => {
-  return onChange(state, () => {
-    styleForm(state, elements);
-    renderFeedback(state, elements.feedbackContainer);
-    renderFeeds(state, i18n, elements.feedsContainer);
-    renderPosts(state, i18n, elements);
-    renderModal(state, elements.modal);
-  });
 };
+
+export default (state, i18n, elements) => onChange(state, () => {
+  styleForm(state, elements);
+  renderFeedback(state, elements.feedbackContainer);
+  renderFeeds(state, i18n, elements.feedsContainer);
+  renderPosts(state, i18n, elements);
+  renderModal(state, elements.modal);
+});

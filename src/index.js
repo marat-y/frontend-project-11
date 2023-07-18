@@ -85,26 +85,33 @@ const parseResponse = (response) => {
 
 const parsingPeriod = 5000;
 
-const parsePosts = (feed) => {
+const parsePosts = (rawFeed) => {
+  const rawPosts = rawFeed.querySelector('channel').querySelectorAll('item');
+  return Array.from(rawPosts).map((rawPost) => ({
+    title: rawPost.querySelector('title').textContent,
+    description: rawPost.querySelector('description').textContent,
+    link: rawPost.querySelector('link').textContent,
+    guid: rawPost.querySelector('guid').textContent,
+  }));
+};
+
+const keepUpdatingFeed = (feed) => {
   downloadFeed(feed.url)
     .then((response) => parseResponse(response))
     .then((rawFeed) => {
-      const rawPosts = rawFeed.querySelector('channel').querySelectorAll('item');
-      rawPosts.forEach((rawPost) => {
-        const guid = rawPost.querySelector('guid').textContent;
-        if (state.posts.filter((post) => post.feed_id === feed.id
-                                      && post.guid === guid).length > 0) return;
+      const existingPostsGuids = state.posts.map((el) => el.guid);
+      const newPosts = parsePosts(rawFeed)
+        .filter((newPost) => !existingPostsGuids.includes(newPost.guid));
 
-        const post = { id: _.uniqueId(), feed_id: feed.id, guid };
-        post.title = rawPost.querySelector('title').textContent;
-        post.description = rawPost.querySelector('description').textContent;
-        post.link = rawPost.querySelector('link').textContent;
+      newPosts.forEach((post) => {
+        post.id = _.uniqueId();
+        post.feed_id = feed.id;
         state.posts.push(post);
       });
-      setTimeout(parsePosts(feed), parsingPeriod);
+      setTimeout(keepUpdatingFeed(feed), parsingPeriod);
     })
     .catch(() => {
-      setTimeout(parsePosts(feed), parsingPeriod);
+      setTimeout(keepUpdatingFeed(feed), parsingPeriod);
     });
 };
 
@@ -114,6 +121,7 @@ const parseFeed = (rawFeed) => {
     return {
       title: channel.querySelector('title').textContent,
       description: channel.querySelector('description')?.textContent,
+      posts: parsePosts(rawFeed),
     };
   } catch {
     throw new Error('parsing_error');
@@ -144,18 +152,25 @@ const handleSubmission = () => {
     .then(() => downloadFeed(url))
     .then((response) => parseResponse(response))
     .then((rawFeed) => parseFeed(rawFeed))
-    .then((feed) => {
-      state.feeds.push({
+    .then((feedData) => {
+      const feed = {
         id: _.uniqueId(),
         url,
-        title: feed.title,
-        description: feed.description,
+        title: feedData.title,
+        description: feedData.description,
+      };
+
+      state.feeds.push(feed);
+      feedData.posts.forEach((post) => {
+        post.id = _.uniqueId();
+        post.feed_id = feed.id;
+        state.posts.push(post);
       });
       state.feedback = i18n.t('success');
       state.state = 'valid';
 
       prepareInput();
-      parsePosts(feed);
+      keepUpdatingFeed(feed);
     })
     .catch((error) => {
       state.state = 'invalid';

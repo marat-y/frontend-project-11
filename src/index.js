@@ -104,20 +104,19 @@ const parsePosts = (feed) => {
 };
 
 const handleSubmission = () => {
-  const newFeed = { id: _.uniqueId(), url: formData().url }
-  downloadFeed(newFeed.url)
+  downloadFeed(formData().url)
     .then((rawFeed) => {
       const channel = rawFeed.querySelector('channel');
+      const newFeed = { id: _.uniqueId(), url: formData().url }
       newFeed.title = channel.querySelector('title').textContent;
       newFeed.description = channel.querySelector('description')?.textContent;
+
       state.feeds.push(newFeed);
-
-      parsePosts(newFeed);
-
       state.state = 'valid';
-      state.feedback = i18n.t('success');
-      
+      state.feedback = i18n.t('success');      
+
       prepareInput();
+      parsePosts(newFeed);
     })
     .catch((error) => {
       console.log(error);

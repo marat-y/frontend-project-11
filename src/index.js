@@ -65,63 +65,85 @@ const downloadFeed = (url) => {
   const encodedUrl = encodeURIComponent(url);
   const proxifiedUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodedUrl}`
   return axios.get(proxifiedUrl)
-    .then((response) => {
-      const domParser = new DOMParser;
-      const parsedResponse = domParser.parseFromString(response.data.contents, 'text/xml');
-      return parsedResponse;
-    })
-    .catch((error) => {
-      console.log(error);
-      state.state = 'invalid';
-      state.feedback = i18n.t('errors.network_error');
+    .catch(() => {
+      throw 'network_error';
     })
 };
+
+const parseResponse = (response) => {
+  try {
+    const domParser = new DOMParser;
+    const parsedResponse = domParser.parseFromString(response.data.contents, 'text/xml');
+    return parsedResponse;
+  } catch {
+    throw 'parsing_error';
+  }
+}
 
 const parsingPeriod = 5000;
 
 const parsePosts = (feed) => {
   downloadFeed(feed.url)
-    .then((rawFeed) => {
-      const rawPosts = rawFeed.querySelector('channel').querySelectorAll('item');
-      rawPosts.forEach((rawPost) => {
-        const guid = rawPost.querySelector('guid').textContent;
-        if(state.posts.filter((post) => post.feed_id === feed.id 
-                                        && post.guid === guid ).length > 0) return;
+  .then((response) => {
+    return parseResponse(response);
+  })
+  .then((rawFeed) => {
+    const rawPosts = rawFeed.querySelector('channel').querySelectorAll('item');
+    rawPosts.forEach((rawPost) => {
+      const guid = rawPost.querySelector('guid').textContent;
+      if(state.posts.filter((post) => post.feed_id === feed.id 
+                                      && post.guid === guid ).length > 0) return;
 
-        const post = { id: _.uniqueId(), feed_id: feed.id, guid: guid, viewed: false }
-        post.title = rawPost.querySelector('title').textContent;
-        post.description = rawPost.querySelector('description').textContent;
-        post.link = rawPost.querySelector('link').textContent;
-        state.posts.push(post);
-      })
+      const post = { id: _.uniqueId(), feed_id: feed.id, guid: guid, viewed: false }
+      post.title = rawPost.querySelector('title').textContent;
+      post.description = rawPost.querySelector('description').textContent;
+      post.link = rawPost.querySelector('link').textContent;
+      state.posts.push(post);
     })
-    .then(() => {
-      setTimeout(parsePosts(feed), parsingPeriod);
-    })
-    .catch((error) => {
-      console.log(error);
-    })
+    setTimeout(parsePosts(feed), parsingPeriod);
+  })
+  .catch((error) => {
+    console.log(error);
+    setTimeout(parsePosts(feed), parsingPeriod);
+  })
 };
 
-const handleSubmission = () => {
-  downloadFeed(formData().url)
-    .then((rawFeed) => {
-      const channel = rawFeed.querySelector('channel');
-      const newFeed = { id: _.uniqueId(), url: formData().url }
-      newFeed.title = channel.querySelector('title').textContent;
-      newFeed.description = channel.querySelector('description')?.textContent;
+const parseFeed = (rawFeed) => {
+  try {
+    const channel = rawFeed.querySelector('channel');
+    return {
+      title: channel.querySelector('title').textContent,
+      description: channel.querySelector('description')?.textContent
+    }
+  } catch {
+    throw 'parsing_error';
+  }
+}
 
-      state.feeds.push(newFeed);
-      state.state = 'valid';
+const handleSubmission = () => {
+  validate(formData())
+    .then(() => {
+      return downloadFeed(formData().url);
+    })
+    .then((response) => {
+      return parseResponse(response);
+    })
+    .then((rawFeed) => {
+      return parseFeed(rawFeed);
+    })
+    .then((feed) => {
+      feed.id = _.uniqueId();
+      feed.url = formData().url;
+      state.feeds.push(feed);
       state.feedback = i18n.t('success');      
+      state.state = 'valid';
 
       prepareInput();
-      parsePosts(newFeed);
+      parsePosts(feed);
     })
     .catch((error) => {
-      console.log(error);
       state.state = 'invalid';
-      state.feedback = i18n.t('errors.parsing_error')
+      state.feedback = i18n.t(`errors.${error}`);
     })
 }
 
@@ -137,22 +159,16 @@ const validate = (fields) => {
       .required()
       .notOneOf(state.feeds.map((feed) => feed.url)),
   });
-
-  state.feedback = '';
-  schema.validate(fields, { abortEarly: false })
-    .then(() => {
-      handleSubmission();
-    })
+  return schema.validate(fields, { abortEarly: false })
     .catch((e) => {
-      state.state = 'invalid';
-      state.feedback = i18n.t(`errors.${e.errors[0]}`)
+      throw e.errors[0];
     });
 };
 
 const onFormSubmit = (e) => {
   e.preventDefault();
   state.state = 'in_progress';
-  validate(formData());
+  handleSubmission();
 }
 
 elements.form.addEventListener('submit', onFormSubmit);

@@ -22,7 +22,9 @@ const initialState = { state: 'valid',
                 errors: [],
                 feeds: [],
                 posts: [],
-                feedback: ''
+                feedback: '',
+                viewedPosts: [],
+                modalPostId: null
               };
 
 const i18n = i18next.createInstance();
@@ -94,7 +96,7 @@ const parsePosts = (feed) => {
       if(state.posts.filter((post) => post.feed_id === feed.id 
                                       && post.guid === guid ).length > 0) return;
 
-      const post = { id: _.uniqueId(), feed_id: feed.id, guid: guid, viewed: false }
+      const post = { id: _.uniqueId(), feed_id: feed.id, guid: guid }
       post.title = rawPost.querySelector('title').textContent;
       post.description = rawPost.querySelector('description').textContent;
       post.link = rawPost.querySelector('link').textContent;
@@ -167,8 +169,17 @@ const validate = (fields) => {
 
 const onFormSubmit = (e) => {
   e.preventDefault();
+  state.feedback = '';
   state.state = 'in_progress';
   handleSubmission();
 }
 
 elements.form.addEventListener('submit', onFormSubmit);
+
+elements.postsContainer.addEventListener('click', (e) => {
+  const postId = e.target.dataset.id; 
+  if (!postId) return;
+
+  state.modalPostId = postId;
+  if (!state.viewedPosts.includes(postId)) state.viewedPosts.push(postId);
+})

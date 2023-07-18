@@ -78,8 +78,9 @@ const renderPosts = (state, i18n, elements) => {
       postLi.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
       
       const postLink = document.createElement('a');
-      postLink.classList.toggle('fw-bold', !post.viewed);
-      postLink.classList.toggle('fw-normal', post.viewed);
+      const isViewed = state.viewedPosts.includes(post.id);
+      postLink.classList.toggle('fw-bold', !isViewed);
+      postLink.classList.toggle('fw-normal', isViewed);
       postLink.textContent = post.title;
       postLink.href = post.link;
       postLink.dataset.id = post.id;
@@ -95,12 +96,6 @@ const renderPosts = (state, i18n, elements) => {
       postPreview.dataset.bsToggle = 'modal';
       postPreview.dataset.bsTarget = `#${modal.id}`;
       postPreview.textContent = i18n.t('view');
-      postPreview.addEventListener('click', (e) => {
-        const post = state.posts.find((post) => post.id === e.target.dataset.id);
-        modal.querySelector('.modal-title').textContent = post.title;
-        modal.querySelector('.modal-body').textContent = post.description;
-        modal.querySelector('a.read').href = post.link;
-      })
       postLi.append(postPreview);
 
       postsList.prepend(postLi);
@@ -113,11 +108,21 @@ const renderPosts = (state, i18n, elements) => {
   }
 }
 
+const renderModal = (state, modal) => {
+  if (!state.modalPostId) return;
+
+  const post = state.posts.find((post) => post.id === state.modalPostId );
+  modal.querySelector('.modal-title').textContent = post.title;
+  modal.querySelector('.modal-body').textContent = post.description;
+  modal.querySelector('a.read').href = post.link;
+}
+
 export default (state, i18n, elements) => {
   return onChange(state, () => {
     styleForm(state, elements);
     renderFeedback(state, elements.feedbackContainer);
     renderFeeds(state, i18n, elements.feedsContainer);
     renderPosts(state, i18n, elements);
+    renderModal(state, elements.modal);
   });
 };
